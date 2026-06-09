@@ -43,18 +43,21 @@ func main() {
 					// TODO: Handle the error better here.
 					fmt.Println("No sessions found for this machine.")
 				}
-				if session != nil {
-					// End the session
-					now := types.NowDateTime()
-					started := session.GetDateTime("started_at").Time()
 
-					duration := now.Time().Sub(started)
+				fmt.Printf("Found the session to update: %s", session.Id)
 
-					session.Set("ended_at", now)
-					session.Set("duration", duration.Seconds())
+				// End the session
+				now := types.NowDateTime()
+				started := session.GetDateTime("started_at").Time()
 
-					app.Save(session)
-				}
+				duration := now.Time().Sub(started)
+
+				session.Set("ended_at", now)
+				session.Set("duration", duration.Seconds())
+
+				app.Save(session)
+
+
 			}
 
 			return e.Next()
