@@ -91,15 +91,16 @@ Sessions are created and closed by Go hooks only. Never mutated by the client.
 
 ### `waitlist_entries`
 
-| Field         | Type                 | Notes                                                                   |
-| ------------- | -------------------- | ----------------------------------------------------------------------- |
-| `machine`     | relation → machines  | required                                                                |
-| `resident`    | relation → residents | required                                                                |
-| `building`    | relation → buildings | required, denormalised                                                  |
-| `position`    | number               | required, managed by Go hook                                            |
-| `joined_at`   | datetime             | required, auto now                                                      |
-| `notified_at` | datetime             | nullable, set when resident is pinged                                   |
-| `expires_at`  | datetime             | nullable, set when resident reaches position 1 (10 min window to claim) |
+| Field         | Type                 | Notes                                                                                                      |
+| ------------- | -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `machine`     | relation → machines  | required                                                                                                   |
+| `resident`    | relation → residents | required                                                                                                   |
+| `building`    | relation → buildings | required, denormalised                                                                                     |
+| `joined_at`   | datetime             | required, auto now — **implicit position**, queue order is always derived by sorting `joined_at` ascending |
+| `notified_at` | datetime             | nullable, set when resident is pinged                                                                      |
+| `expires_at`  | datetime             | nullable, set when resident reaches first in queue (10 min window to claim)                                |
+
+> `position` is not stored. It is computed client-side as the index of the resident's entry in the `joined_at`-sorted list. Storing it would require updating multiple records atomically on every join, leave, or expiry — unnecessary complexity. `joined_at` is the single source of truth for queue order.
 
 ---
 
@@ -269,9 +270,10 @@ app.OnRecordCreateRequest("machine_views").BindFunc(func(e *core.RecordRequestEv
 ```go
 // Side effect — fires after waitlist_entry delete succeeds
 app.OnRecordAfterDeleteSuccess("waitlist_entries").BindFunc(func(e *core.RecordEvent) error {
-    // Reorder positions for remaining entries on this machine
-    // Find new first entry, set expires_at = now + 10 min
-    // Send push notification to new first in queue
+    // No position reordering needed — queue order is always derived from joined_at
+    // Find the entry with the earliest joined_at for this machine where expires_at is null
+    // Set their expires_at = now + 10 min
+    // Send push notification to that resident
     return e.Next()
 })
 ```

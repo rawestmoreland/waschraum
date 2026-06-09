@@ -13,18 +13,14 @@ func init() {
 			return err
 		}
 
-		existing, err := app.FindFirstRecordByData(superusers, "email", "richard@westmorelandcreative.com")
-		if existing == nil {
+		_, err = app.FindFirstRecordByData(superusers, "email", "richard@westmorelandcreative.com")
+		if err != nil {
 			record := core.NewRecord(superusers)
-			
+
 			record.Set("email", "richard@westmorelandcreative.com")
 			record.Set("password", "Testing12345")
 	
-			err = app.Save(record)
-	
-			if err != nil {
-				return err
-			}
+			app.Save(record)
 		}
 
 
