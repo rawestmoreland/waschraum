@@ -13,16 +13,21 @@ func init() {
 			return err
 		}
 
-		record := core.NewRecord(superusers)
-
-		record.Set("email", "richard@westmorelandcreative.com")
-		record.Set("password", "Testing12345")
-
-		err = app.Save(record)
-
-		if err != nil {
-			return err
+		existing, err := app.FindFirstRecordByData(superusers, "email", "richard@westmorelandcreative.com")
+		if existing == nil {
+			record := core.NewRecord(superusers)
+			
+			record.Set("email", "richard@westmorelandcreative.com")
+			record.Set("password", "Testing12345")
+	
+			err = app.Save(record)
+	
+			if err != nil {
+				return err
+			}
 		}
+
+
 
 		jsonData := `[
 			{
