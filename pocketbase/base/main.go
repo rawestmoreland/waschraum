@@ -33,7 +33,7 @@ func main() {
 		return se.Next()
 	})
 
-	app.Cron().MustAdd("machine_auto_release", "0/15 * * * *", func() {
+	app.Cron().MustAdd("machine_auto_release", "*/15 * * * *", func() {
 		past := time.Now().Add(time.Hour * -3)
 
 		machines, err := app.FindRecordsByFilter("machines", "status = 'in_use' && started_at < {:past}", "-started_at", 100, 0, dbx.Params{"past": past})
